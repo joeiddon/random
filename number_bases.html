@@ -1,0 +1,30 @@
+<html>
+<head>
+</head>
+<body>
+<h1>Number Base Converter</h1><hr>
+<p>Input:</p>
+<input id='num1' type='text' placeholder='type a number'></input>
+<input id='base1' type='text' placeholder='base'></input>
+<hr>
+<p>Output:</p>
+<input id='num2' type='text' placeholder='type a number'></input>
+<input id='base2' type='text' placeholder='base'></input>
+<script>
+'use strict';
+let inputs = document.getElementsByTagName('input');
+for (let i = 0; i < inputs.length; i++){
+    inputs[i].addEventListener('input', update);
+}
+
+function update(){
+    let num1 = document.getElementById('num1');
+    let base1 = document.getElementById('base1')
+    let num2 = document.getElementById('num2');
+    let base2 = document.getElementById('base2');
+	if (!num1.value || !base1.value || !base2.value) return;
+    num2.value = parseInt(num1.value, base1.value).toString(base2.value);
+}
+</script>
+</body>
+</html>
