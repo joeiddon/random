@@ -1,0 +1,133 @@
+<html>
+<head>
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+}
+canvas {
+    position: fixed;
+    background-color: blue;
+    float: top;
+    z-index: -1;
+}
+input {
+    width: 400px;
+}
+label {
+    color: #fff;
+}
+</style>
+</head>
+<body>
+<canvas id='cnvs'></canvas>
+<input type='range' value='0' id='slide1'></input>
+<label id='label1' for='slide1'>theta1=0</label>
+<br>
+<input type='range' value='0' id='slide2'></input>
+<label id='label2' for='slide2'>theta2=0</label>
+<br>
+<input type='range' value='0' id='slide_sf' oninput='speeds.sf=parseInt(this.value*2)'></input>
+<label for='slide_sd'>speed increase factor</label>
+<script>
+'use strict';
+let cnvs = document.getElementById('cnvs');
+let ctx = cnvs.getContext('2d');
+cnvs.width = innerWidth;
+cnvs.height = innerHeight;
+
+let slide1 = document.getElementById('slide1');
+let slide2 = document.getElementById('slide2');
+let label1 = document.getElementById('label1');
+let label2 = document.getElementById('label2');
+
+let radius = 300;
+let speeds = {land: 2, water: 1, sf: 80}; //pix / sec * sf [scale factor]
+let theta1 = 0;
+let theta2 = 0;
+let position1 = 0;
+let position2 = 0;
+let lengths1 = {land: Math.PI*radius, water: 0};
+let lengths2 = {land: Math.PI*radius, water: 0};
+
+slide1.addEventListener('input', function(){
+    theta1 = parseInt(slide1.value)/100*Math.PI;
+    label1.innerText='theta1='+(parseInt(theta1*100)/100).toString();
+    lengths1.land = (Math.PI-theta1)*radius;
+    lengths1.water = (2*radius**2-2*radius**2*Math.cos(theta1))**0.5;
+    position1 = position2 = 0;
+});
+
+slide2.addEventListener('input', function(){
+    theta2 = parseInt(slide2.value)/100*Math.PI;
+    label2.innerText='theta2='+(parseInt(theta2*100)/100).toString();
+    lengths2.land = (Math.PI-theta2)*radius;
+    lengths2.water = (2*radius**2-2*radius**2*Math.cos(theta2))**0.5;
+    position1 = position2 = 0;
+});
+
+function draw_angle(start, fin){ //radians
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(cnvs.width/2, cnvs.height/2, radius, start+Math.PI, Math.PI-fin, true);
+    ctx.stroke();
+}
+
+function draw_line(sx, sy, fx, fy){ //displacement from centre coordinates
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cnvs.width/2 + sx, cnvs.height/2 + sy);
+    ctx.lineTo(cnvs.width/2 + fx, cnvs.height/2 + fy);
+    ctx.stroke();
+}
+
+let last_time_ms = 0;
+function update(time_ms){
+    let time_diff_s = last_time_ms ? ((time_ms - last_time_ms) / 1000) : 0;
+    last_time_ms = time_ms;
+    ctx.clearRect(0, 0, cnvs.width, cnvs.height);
+    ctx.strokeStyle = '#fff';
+    draw_angle(0, Math.PI-theta1);
+    draw_line(-Math.cos(Math.PI-theta1)*radius,
+               Math.sin(Math.PI-theta1)*radius,
+               radius, 0);
+    draw_angle(0, Math.PI-theta2);
+    draw_line(-Math.cos(Math.PI-theta2)*radius,
+               Math.sin(Math.PI-theta2)*radius,
+               radius, 0);
+
+    ctx.strokeStyle = '#f00';
+    if (position1 < lengths1.land + lengths1.water){
+        position1 += (position2 < lengths1.land ? speeds.land : speeds.water) * speeds.sf * time_diff_s;
+    }
+    if (position1 > lengths1.land){
+        draw_angle(0, Math.PI-theta1);
+        draw_line(-Math.cos(Math.PI-theta1)*radius,
+                   Math.sin(Math.PI-theta1)*radius,
+                  -Math.cos(Math.PI-theta1)*radius+Math.cos((Math.PI-theta1)/2)*(position1-lengths1.land),
+                   Math.sin(Math.PI-theta1)*radius-Math.sin((Math.PI-theta1)/2)*(position1-lengths1.land));
+    } else {
+        draw_angle(0, position1/radius);
+    }
+    ctx.strokeStyle = '#0f0';
+    if (position2 < lengths2.land + lengths2.water){
+        position2 += (position2 < lengths2.land ? speeds.land : speeds.water) * speeds.sf * time_diff_s;
+    }
+    if (position2 > lengths2.land){
+        draw_angle(0, Math.PI-theta2);
+        draw_line(-Math.cos(Math.PI-theta2)*radius,
+                   Math.sin(Math.PI-theta2)*radius,
+                  -Math.cos(Math.PI-theta2)*radius+Math.cos((Math.PI-theta2)/2)*(position2-lengths2.land),
+                   Math.sin(Math.PI-theta2)*radius-Math.sin((Math.PI-theta2)/2)*(position2-lengths2.land));
+    } else {
+        draw_angle(0, position2/radius);
+    }
+
+
+    requestAnimationFrame(update);
+}
+
+requestAnimationFrame(update);
+</script>
+</body>
+</html>
